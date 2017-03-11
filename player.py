@@ -1,65 +1,83 @@
-import pygame
+import pygame, random
 import cores
 import entidades
 
 class Lana(entidades.Entidade):
-	#Atributos
-	def __init__(self, largura, altura, x, y, imagem, cor, escalaX, escalaY):
-		entidades.Entidade.__init__(self, largura, altura, x, y, imagem, cor, escalaX, escalaY)
-		self.velocidadeX = 2.0
+	def __init__(self, x, y, largura, altura, cor):
+		entidades.Entidade.__init__(self, x, y, largura, altura, cor)
+		self.velocidadeX = 0.0
+		self.velocidadeXMax = 5.0
 		self.velocidadeY = 0.0
-		self.maximaVelocidadeY = 5
-		self.gravidade = 0.1
-		self.LRQueda = [False, False, False]
+		self.velocidadeYMax = 20.0
+		self.gravidade = 0.3
 		self.colidindo = False
-		self.colisaoX = ""
-		self.colisaoY = ""
-		self.pulando = True
+		self.ad = [False, False]
+		self.forcaDoPulo = -8
+		self.impulso = 0
 
-	#Metodos
-	def atualizarPosicao(self):
-		#Movimentacao Eixo X
-		if(self.LRQueda[0] == True):
-			self.x -= self.velocidadeX
-		elif(self.LRQueda[1] == True):
-			self.x += self.velocidadeX
-		#Movimentacao Eixo Y
-		if(self.colidindo == False):kkk
-			if(self.velocidadeY < self.maximaVelocidadeY):
-				self.velocidadeY += self.gravidade
-			self.y += self.velocidadeY
+	def atualizarPosicao(self, largura, altura, tempo):
+		#Eixo X
+		if(self.ad[0] == True and self.x > 0):
+			self.x -= self.velocidadeXMax * tempo
+		if(self.ad[1] == True and self.x < (largura - self.largura)):
+			self.x += self.velocidadeXMax * tempo
+		#Eixo Y
+		if(self.colidindo == False):
+			if(self.velocidadeY < self.velocidadeYMax):
+				self.velocidadeY += self.gravidade * tempo
+			self.y += self.velocidadeY * tempo
 		else:
-			if(self.pulando == True):
-				self.y = self.colisaoY - self.escalaY + 1
-				self.velocidadeY = 0
-				self.pulando = False
-			
+			self.velocidadeY = self.impulso * tempo
 
-	def colidiu(self, c, y):
-		self.colidindo = c
-		if(self.colidindo == True):
-			self.colisaoY = y
-		else:
-			self.colisaoY = ""
+		#AtualizarPosisoes
+		self.corpo = pygame.Rect(self.x, self.y, self.largura, self.altura)
+		self.topo = pygame.Rect(self.x, (self.y - self.alturaTB), self.larguraTB, self.alturaTB)
+		self.base = pygame.Rect(self.x, (self.y + self.altura), self.larguraTB, self.alturaTB)
+		self.direita = pygame.Rect((self.x - self.larguraDE), self.y, self.larguraDE, self.alturaDE)
+		self.esquerda = pygame.Rect((self.x + self.largura), self.y, self.larguraDE, self.alturaDE)
 
-
-	#Botao Precionado
 	def botaoPressionado(self, key):
-		#Movimentacao Eixo X
 		if(key == pygame.K_a):
-			self.LRQueda[0] = True
-		elif(key == pygame.K_d):
-			self.LRQueda[1] = True
-		#Movimentacao Eixo Y
+			self.ad[0] = True
+		if(key == pygame.K_d):
+			self.ad[1] = True
 		if(key == pygame.K_w):
-			#self.y -= 10
-			self.velocidadeY = -5
-			self.pulando = True
+			self.colidindo = False
+			self.velocidadeY = self.forcaDoPulo
 
-	#Botao Solto
+
 	def botaoSolto(self, key):
 		if(key == pygame.K_a):
-			self.LRQueda[0] = False
-		elif(key == pygame.K_d):
-			self.LRQueda[1] = False
+			self.ad[0] = False
+		if(key == pygame.K_d):
+			self.ad[1] = False	
+
+	def colidiuTopo(self, y):
+		if(self.velocidadeY < 0):
+			self.velocidadeY = (self.velocidadeY * (-1)) * 0.5
+
+	def colidiuBase(self, y):
+		if(self.velocidadeY < 0):
+			self.colidindo = False
+		else:
+			self.colidindo = True
+			self.y = y - self.altura - 4
+
+	def colidiuDireita(self, x, largura):
+		self.x = x + largura + 8
+
+	def colidiuEsquerda(self, x):
+		self.x = x - self.largura - 8
+		
+
+		
+	def vibrar(self):
+		self.x += random.randint(-1, 1)
+		self.y += random.randint(-1, 1)
+		self.corpo = pygame.Rect(self.x, self.y, self.largura, self.altura)
+
+
+
+
+
 
